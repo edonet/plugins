@@ -1,0 +1,16 @@
+{
+  "name": "webpack-module-map",
+  "version": "1.0.0",
+  "description": "create webpack module map",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "webpack",
+    "module",
+    "map"
+  ],
+  "author": "lifx",
+  "license": "ISC"
+}
