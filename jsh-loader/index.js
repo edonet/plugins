@@ -6,7 +6,7 @@ const KEYWORDS = ['break', 'do', 'instanceof', 'typeof', 'case', 'else', 'new', 
         'export', 'interface', 'static', 'byte', 'extends', 'long', 'super', 'char', 'final', 'native',
         'synchronized', 'class', 'float', 'package', 'throws', 'const', 'goto', 'private', 'transient',
         'implements', 'protected', 'volatile', 'double', 'import', 'public', 'let', 'yield', 'window',
-        'document', 'location', 'history', 'console'];
+        'document', 'location', 'history', 'console', 'locals'];
 
 /**
  * @method: 解析模板字符串
@@ -73,7 +73,7 @@ function compile(source) {
 
 var utils = require('jsh-loader/utils');
 
-module.exports = function (data) {
+module.exports = function (locals) {
     var ${vari};
 
     ${code.replace(/\t+/, '')}
@@ -155,7 +155,7 @@ function getVariable(str) {
     }
 
     for (let value of str) {
-        code.push(`${value} = data.${value}`);
+        code.push(`${value} = locals.${value}`);
     }
 
     return code;
