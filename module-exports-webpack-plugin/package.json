@@ -1,6 +1,6 @@
 {
-  "name": "webpack-module-exports",
-  "version": "1.0.0",
+  "name": "module-exports-webpack-plugin",
+  "version": "0.1.0",
   "description": "webpack module exports",
   "main": "index.js",
   "scripts": {
