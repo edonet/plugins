@@ -27,11 +27,11 @@ function compile(source) {
         .replace(new RegExp("(" + left + "[^" + right + "]*)//.*\n", "g"), "$1")
 
         // 把所有换行去掉  \r回车符 \t制表符 \n换行符
-        .replace(new RegExp("[\\r\\t\\n]", "g"), "")
+        .replace(/\s*[\r\t\n]+\s*/g, " ")
 
         // 去掉注释内容  <%* 这里可以任意的注释 *%>
         // 默认支持HTML注释，将HTML注释匹配掉的原因是用户有可能用 <! !>来做分割符
-        .replace(new RegExp("<!--.*?-->", "g"), "")
+        .replace(/<!--.*?-->/g, "")
         .replace(new RegExp(left + "\\*.*?\\*" + right, "g"), "")
 
         .split(right);
