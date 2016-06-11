@@ -71,7 +71,7 @@ function compile(source) {
     return `
 'use strict';
 
-var utils = require('tpl-loader/utils');
+var utils = require('jsh-loader/utils');
 
 module.exports = function (data) {
     var ${vari};
