@@ -2,7 +2,7 @@
 
 const KEYWORDS = ['break', 'do', 'instanceof', 'typeof', 'case', 'else', 'new', 'var', 'catch', 'finally',
         'return', 'void', 'continue', 'for', 'switch', 'while', 'debugger', 'function', 'this', 'with',
-        'default', 'if', 'throw', 'delete', 'in', 'try', 'abstract', 'enum', 'int', 'short', 'boolean',
+        'default', 'if', 'throw', 'delete', 'in', 'of', 'try', 'abstract', 'enum', 'int', 'short', 'boolean',
         'export', 'interface', 'static', 'byte', 'extends', 'long', 'super', 'char', 'final', 'native',
         'synchronized', 'class', 'float', 'package', 'throws', 'const', 'goto', 'private', 'transient',
         'implements', 'protected', 'volatile', 'double', 'import', 'public', 'let', 'yield', 'window',
