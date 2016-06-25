@@ -5,7 +5,7 @@
  * @param  [string] source: 需要转义的源码
  * @return [string]: 转义后的代码
  */
-function encodeHTML(source) {
+function xss(source) {
     return String(source)
         .replace(/&/g,'&amp;')
         .replace(/</g,'&lt;')
@@ -14,4 +14,5 @@ function encodeHTML(source) {
         .replace(/"/g,'&quot;')
         .replace(/'/g,'&#39;');
 }
-exports.encodeHTML = encodeHTML;
+
+module.exports = xss;

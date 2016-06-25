@@ -8,158 +8,210 @@ const KEYWORDS = ['break', 'do', 'instanceof', 'typeof', 'case', 'else', 'new', 
         'implements', 'protected', 'volatile', 'double', 'import', 'public', 'let', 'yield', 'window',
         'document', 'location', 'history', 'console', 'locals'];
 
-/**
- * @method: 解析模板字符串
- * @param  [string] str: 需要解析模板字符串
- * @return [string]: 解析后的函数字符串
- */
-function compile(source) {
-    var left = '<%',
-        right = '%>',
-        indent = '\t',
-        code = '',
-        js = [],
-        vari;
+// 模板生成函数
+var jsh =  function (locals) {
 
-    source = String(source)
+    var __xss = require('jsh-loader/xss'),
+        __s;
 
-        // 去掉分隔符中js行注释
-        .replace(new RegExp("(" + left + "[^" + right + "]*)//.*\n", "g"), "$1")
+    __s = __xss(locals);
 
-        // 把所有换行去掉  \r回车符 \t制表符 \n换行符
-        .replace(/\s*[\r\t\n]+\s*/g, " ")
-
-        // 去掉注释内容  <%* 这里可以任意的注释 *%>
-        // 默认支持HTML注释，将HTML注释匹配掉的原因是用户有可能用 <! !>来做分割符
-        .replace(/<!--.*?-->/g, "")
-        .replace(new RegExp(left + "\\*.*?\\*" + right, "g"), "")
-
-        .split(right);
-
-
-    // 遍历模板字符串
-    for (let str of source) {
-        str = str.split(left);
-        var $1 = str[0].replace(/'/g, '\\\''),
-            $2 = str[1];
-
-        // 处理模板中的HTML代码
-        code += `${indent}code += '${$1}';\n`;
-
-        if ($2 && ($2 = $2.trim()) && $2 !== '=') {
-            // 提取Javascript中的参数
-            js.push($2);
-
-            // 处理缩进
-            if (/\}$/.test($2)) {
-                indent = indent.substr(1);
-            }
-
-            // 处理模板中的Javascript代码
-            code += `${indent}${logic($2)}\n`;
-
-            if (/\{$/.test($2)) {
-                indent += '\t';
-            }
-        }
-    }
-
-    indent = `,\n${indent}\t`;
-    vari = getVariable(js.join('\n')).join(indent);
-
-
-    return `
-'use strict';
-
-var utils = require('jsh-loader/utils');
-
-module.exports = function (locals) {
-    var ${vari};
-
-    ${code.replace(/\t+/, '')}
-    return code;
-}
-    `;
+    return __s;
 }
 
-/**
- * @method: 处理模板字符串中的Javascript代码
- * @param  [string] code: 需要处理的Javascript代码字符串
- * @return [string]: 处理后的代码字符串
- */
-function logic(code) {
-    if (code.indexOf('=') === 0) {
-        code = code.replace(/^=\s+/, '');
-        return `code += utils.encodeHTML(${code});`;
-    } else {
-        return code;
-    }
-}
+// 抛出接口
+module.exports = function (source) {
+    var level = 1,
+        js = [];
 
-/**
- * @method: 提取字符串中的Javascript变量
- * @param  [string] str: 需要提取的字符串
- * @return [array]: 提取出来的变量数组
- */
-function getVariable(str) {
-    str = str
+    source = source
+
         // 去除注解
-        .replace(/\/\/.*?[\n\t\r]/g, '')
-        .replace(/[\r\t\n]+/g, ' ')
-        .replace(/\/\*.*?\*\//g, '')
+        .replace(/<!--.*?-->/g, '')
+
+        // 去除标签中的换行
+        .replace(/>\s+</g, '><')
+
+        // 分离代码段
+        .split('%>')
+
+        // 遍历代码片段
+        .map(function (code) {
+            var $1, $2, indent;
+
+            // 分离html和js
+            code = code.split('<%');
+
+            // 转义html中的【'】且去除换行的空格
+            if ($1 = code[0].trim()) {
+                $1 = $1.replace(/'/g, '\\\'').replace(/\s*[\r\n]\s*/g, ' ');
+            }
+
+            if ('1' in code && ($2 = compile(code[1].trim()))) {
+
+                // 降低缩进等级
+                if ($2[0] === '}') {
+                    level --;
+                }
+
+                indent = '\t'.repeat(level);
+
+                // 添加缩进等级
+                if ($2.substr(0, 3) !== '__s') {
+                    if ($2[0] === '}') {
+                        $2 = indent + $2.replace(/;\s*/g, ';\n' + indent);
+                    } else {
+                        $2 = '\n' + indent + $2.replace(/;\s*/g, ';\n' + indent);
+                    }
+                } else {
+                    $2 =  indent + $2;
+                }
+
+                // 提高缩进等级
+                if ($2.substr(-1) === '{') {
+                    level ++;
+                }
+
+                // 收集js片段
+                js.push($2);
+
+                return `${$1}';\n${$2}\n${'\t'.repeat(level)}__s += '`;
+            }
+
+            return $1;
+        })
+
+        // 合并代码片段
+        .join('')
+
+
+        // 去除多余的空代码
+        .replace(/[\r\n\t]*__s \+= '';/g, '')
+
+        // 去除首尾空白
+        .trim();
+
+
+    // 获取变量列表
+    if ((js = collect(js.join(''))).length) {
+        js = js.push('') && js.join(',\n' + '\t'.repeat(level + 1));
+    } else {
+        js = '';
+    }
+
+    return '\'use strict\';\n\nmodule.exports = ' + jsh
+
+        // 生成模板函数
+        .toString()
+
+        // 替换xss模块路径
+        .replace('var ', `var ${js}`)
+
+        // 替换模板代码
+        .replace('__xss(locals)', `'${source}'`);
+}
+
+
+// 编译js代码
+function compile(code) {
+    if (!code || code === '-' || code === '=') {
+        return '';
+    }
+
+    code = code
+
+        // 去除js多行注解
+        .replace(/\/\*[\S\s]*?\*\//g, ' ')
+
+        // 去除js行内注解
+        .replace(/\/\/.*/g, '')
+
+        // 去除js换行
+        .replace(/\s*[\r\n]\s*/g, ' ');
+
+
+    // 输出类型
+    switch (code[0]) {
+        case '-':
+            // 输出转义字符
+            return `__s += __xss(${code.substr(1).trim()});`;
+        case '=':
+            // 输出原字符
+            return `__s += ${code.substr(1).trim()};`;
+        default:
+            // js处理
+            return code;
+    }
+}
+
+// 采集js代码中的变量
+function collect(code) {
+    code = code
+
+        // 去除数字
+        .replace(/\b\d+\b/g, '')
 
         // 去除字符串
         .replace(/("|').*?\1/g, '')
 
         // 去除正则表达式
-        .replace(/\/[^\/]+?\/\w+/g, '');
-
-    var set = [],
-        patt = str.match(/\bvar\s+(.*?);/g),
-        code = ['code = \'\''];
-
-    for (let value of patt) {
-        value = value.replace(/var\s+/, '').split(/,\s+/).map(function (v) {
-            return v.split(/[\s=]/)[0];
-        });
-        set = set.concat(value);
-    }
-
-    str = str
+        .replace(/\/[^\/]+?\/\w+/g, '')
 
         // 去除函数
-        .replace(/\w+\(/g, ' ')
+        .replace(/\w+\(/g, '')
 
-        // 去除后代属性
-        .replace(/\.[\w\.]+/g, ' ')
+        // 去除对象属性
+        .replace(/(\.\w+)+/g, ' ')
 
-        // 去除数字
-        .replace(/\b[\d\.]+\b/g, '')
+        // 去除私有变量
+        .replace(/__s/g, '')
+        .replace(/__xss/g, '');
 
-        // 去除非单词字符
-        .replace(/[^\w]+/g, ' ');
+    var patt = /var\s+(.+?);/g,
+        vari = [],
+        match;
 
+    // 提取代码中的变量
+    while (match = patt.exec(code)) {
+        match[1].split(/,\s*/).forEach(function (v) {
+            if (v = v.match(/^\w+/)) {
+                vari.push(v[0]);
+            }
+        });
+    }
 
-    str = new Set(str.trim().split(/\s+/));
+    code = code
+
+        // 替换非单词字符
+        .replace(/[^\w]+/g, ' ')
+
+        // 去除首尾空白
+        .trim()
+
+        // 分割成单词
+        .split(' ');
+
+    vari = new Set(vari);
+    code = new Set(code);
+    match = [];
 
     // 去除关键字
     for (let key of KEYWORDS) {
-        if(str.has(key)){
-            str.delete(key);
-        }
+        code.has(key) && code.delete(key);
     }
 
-    // 去除定义的变量
-    for (let key of set) {
-        str.delete(key);
+    // 去除自定义的变量
+    for (let key of vari) {
+        code.delete(key);
     }
 
-    for (let value of str) {
-        code.push(`${value} = locals.${value}`);
+    // 生成变量代码
+    for (let value of code) {
+        value && match.push(`${value} = locals.${value}`);
     }
 
-    return code;
+
+    return match;
 }
 
-// 抛出接口
-module.exports = compile;
+
