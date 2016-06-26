@@ -1,0 +1,16 @@
+{
+  "name": "extract-style-webpack-plugin",
+  "version": "0.1.0",
+  "description": "a plugin for extract style from webpack",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "webpack",
+    "style",
+    "extract"
+  ],
+  "author": "lifx",
+  "license": "ISC"
+}
