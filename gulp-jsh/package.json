@@ -1,0 +1,21 @@
+{
+  "name": "gulp-jsh",
+  "version": "0.1.0",
+  "description": "gulp tool for compile template(.tpl/.ejs) file",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "edonet",
+    "gulp",
+    "jsh",
+    "tpl",
+    "ejs"
+  ],
+  "author": "lifx",
+  "license": "ISC",
+  "devDependencies": {
+    "jsh-loader": "^0.2.0"
+  }
+}
